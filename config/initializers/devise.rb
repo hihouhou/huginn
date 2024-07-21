@@ -250,7 +250,7 @@ Devise.setup do |config|
   if defined?(OmniAuth::Strategies::DropboxOauth2) &&
      (key = ENV["DROPBOX_OAUTH_KEY"]).present? &&
      (secret = ENV["DROPBOX_OAUTH_SECRET"]).present?
-    config.omniauth :dropbox, key, secret, strategy_class: OmniAuth::Strategies::DropboxOauth2, request_path: '/auth/dropbox', callback_path: '/auth/dropbox/callback'
+    config.omniauth :dropbox, key, secret, strategy_class: OmniAuth::Strategies::DropboxOauth2, request_path: '/auth/dropbox', callback_path: '/auth/dropbox/callback, method: 'post''
   end
 
   if defined?(OmniAuth::Strategies::Evernote) &&
