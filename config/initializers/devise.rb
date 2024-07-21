@@ -244,7 +244,7 @@ Devise.setup do |config|
   if defined?(OmniAuth::Strategies::Tumblr) &&
      (key = ENV["TUMBLR_OAUTH_KEY"]).present? &&
      (secret = ENV["TUMBLR_OAUTH_SECRET"]).present?
-    config.omniauth :'tumblr', key, secret
+    config.omniauth :'tumblr', key, secret, method: 'post'
   end
 
   if defined?(OmniAuth::Strategies::DropboxOauth2) &&
@@ -262,6 +262,13 @@ Devise.setup do |config|
     else
       config.omniauth :evernote, key, secret
     end
+  end
+
+  if defined?(OmniAuth::Strategies::AzureActiveDirectory) &&
+     (tenant_id = ENV["AZURE_TENANT_ID"]).present? &&
+     (client_id = ENV["AZURE_CLIENT_ID"]).present? &&
+     (client_secret = ENV["AZURE_CLIENT_SECRET"]).present?
+    config.omniauth :azure_active_directory, client_id, client_secret, tenant_id: tenant_id, request_path: '/auth/azure', authorize_params: {scope: 'openid profile email'}
   end
 
   if defined?(OmniAuth::Strategies::GoogleOauth2) &&
