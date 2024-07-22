@@ -241,6 +241,13 @@ Devise.setup do |config|
     config.omniauth :twitter, key, secret, authorize_params: {force_login: 'true', use_authorize: 'true'}
   end
 
+  if defined?(OmniAuth::Strategies::Azure) &&
+     (key = ENV["AZURE_CLIENT_ID"]).present? &&
+     (key = ENV["AZURE_CLIENT_SECRET"]).present? &&
+     (secret = ENV["AZURE_TENANT_ID"]).present?
+    config.omniauth :azure_activedirectory_v2, client_id: ENV['AZURE_CLIENT_ID'], client_secret: ENV['AZURE_CLIENT_SECRET'], tenant_id: ENV['AZURE_TENANT_ID']
+  end
+
   if defined?(OmniAuth::Strategies::Tumblr) &&
      (key = ENV["TUMBLR_OAUTH_KEY"]).present? &&
      (secret = ENV["TUMBLR_OAUTH_SECRET"]).present?
@@ -304,4 +311,5 @@ Devise.setup do |config|
   config.omniauth_path_prefix = "/auth"
 
   OmniAuth.config.logger = Rails.logger
+  OmniAuth.config.allowed_request_methods = %i[get post]
 end
