@@ -37,7 +37,7 @@ $(function () {
           return matches.push({ value: str });
         }
       });
-      return callback(matches.slice(0, 6));
+      return callback(matches.slice(0, 15));
     });
   };
 
