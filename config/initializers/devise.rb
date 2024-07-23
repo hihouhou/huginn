@@ -304,5 +304,4 @@ Devise.setup do |config|
   config.omniauth_path_prefix = "/auth"
 
   OmniAuth.config.logger = Rails.logger
-  OmniAuth.config.allowed_request_methods = %i[get post]
 end
