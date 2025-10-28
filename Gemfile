@@ -38,7 +38,7 @@ gem 'net-ftp-list' # FtpsiteAgent
 gem 'pirate_weather_forecast_ruby' # WeatherAgent
 gem 'rturk', '~> 2.12.1'          # HumanTaskAgent
 gem 'slack-notifier', '~> 2.4.0'  # SlackAgent
-gem 'twilio-ruby', '~> 7.8.3'     # TwilioAgent
+gem 'twilio-ruby', '~> 7.8.4'     # TwilioAgent
 gem 'xmpp4r', '~> 0.5.6'          # JabberAgent
 
 # Weibo Agents
@@ -104,12 +104,13 @@ gem 'geokit-rails', '~> 2.5'
 gem 'httmultiparty', '~> 0.3.16'
 gem 'httparty', '~> 0.23', '>= 0.23.2'
 gem 'huginn_agent'
-gem 'jquery-rails', '~> 4.6'
-gem 'json', '~> 2.15', '>= 2.15.1'
+gem 'jquery-rails', '~> 4.6', '>= 4.6.1'
+gem 'json', '~> 2.15', '>= 2.15.2'
 gem 'jsonpath', '~> 1.1', '>= 1.1.5'
 gem 'kaminari', '~> 1.2', '>= 1.2.2'
 gem 'kramdown'
 gem 'liquid', '~> 5.6', '5.6.0'
+gem 'logger'
 gem 'loofah', '~> 2.24', '>= 2.24.1'
 gem 'mail', '>= 2.8.1'
 gem 'mini_magick', '>= 5.3.1'
