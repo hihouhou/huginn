@@ -1,12 +1,4 @@
 GIT
-  remote: https://knu@bitbucket.org/knu/hypdf_gem.git
-  revision: e11df6bd71356c9211e5001d729f3e92bfd6e19e
-  branch: uploadio_namespace
-  specs:
-    hypdf (1.0.19)
-      httparty (> 0.16.0, < 1.0)
-
-GIT
   remote: https://github.com/Hirurg103/capybara_select2.git
   revision: 48e2c458c2827cf2af2b0a287b30468fa8d761bf
   specs:
@@ -80,6 +72,14 @@ GIT
       multi_xml (>= 0.5.2)
 
 GIT
+  remote: https://github.com/knu/mini_racer.git
+  revision: 172396ba66144124e3af676e1b8f02f393dfdfdc
+  branch: fix/darwin_build
+  specs:
+    mini_racer (0.20.0)
+      libv8-node (~> 24.12.0.1)
+
+GIT
   remote: https://github.com/sferik/twitter.git
   revision: 5fc9b15371b0936a4b331103b588c860f46170fd
   specs:
@@ -103,6 +103,7 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
+    Ascii85 (2.0.1)
     ace-rails-ap (4.5)
     actioncable (7.0.8.7)
       actionpack (= 7.0.8.7)
@@ -171,6 +172,7 @@ GEM
       tzinfo (~> 2.0)
     addressable (2.8.7)
       public_suffix (>= 2.0.2, < 7.0)
+    afm (1.0.0)
     airbrussh (1.4.1)
       sshkit (>= 1.6.1, != 1.7.0)
     ast (2.4.2)
@@ -290,7 +292,7 @@ GEM
       evernote-thrift
       oauth (>= 0.4.1)
     execjs (2.9.1)
-    faraday (2.14.0)
+    faraday (2.14.1)
       faraday-net_http (>= 2.0, < 3.5)
       json
       logger
@@ -301,8 +303,8 @@ GEM
       zlib (~> 3.0)
     faraday-multipart (1.0.4)
       multipart-post (~> 2)
-    faraday-net_http (3.4.1)
-      net-http (>= 0.5.0)
+    faraday-net_http (3.4.2)
+      net-http (~> 0.5)
     faraday-typhoeus (1.1.0)
       faraday (~> 2.0)
       typhoeus (~> 1.4)
@@ -415,6 +417,7 @@ GEM
       guard-compat (~> 1.1)
       rspec (>= 2.99.0, < 4.0)
     hashdiff (1.0.1)
+    hashery (2.1.2)
     hashie (3.5.7)
     haversine (0.3.2)
     hipchat (1.6.0)
@@ -478,9 +481,9 @@ GEM
       letter_opener (~> 1.9)
       railties (>= 6.1)
       rexml
-    libv8-node (24.1.0.0-arm64-darwin)
-    libv8-node (24.1.0.0-x86_64-darwin)
-    libv8-node (24.1.0.0-x86_64-linux)
+    libv8-node (24.12.0.1-arm64-darwin)
+    libv8-node (24.12.0.1-x86_64-darwin)
+    libv8-node (24.12.0.1-x86_64-linux)
     liquid (5.6.0)
       bigdecimal
       strscan
@@ -515,8 +518,6 @@ GEM
     mini_magick (5.3.1)
       logger
     mini_mime (1.1.5)
-    mini_racer (0.19.0)
-      libv8-node (~> 24.1.0.0)
     minitest (5.26.0)
     mqtt (0.7.0)
       logger
@@ -600,6 +601,12 @@ GEM
     parallel (1.23.0)
     parser (3.2.2.1)
       ast (~> 2.4.1)
+    pdf-reader (2.15.1)
+      Ascii85 (>= 1.0, < 3.0, != 2.0.0)
+      afm (>= 0.2.1, < 2)
+      hashery (~> 2.0)
+      ruby-rc4
+      ttfunk
     pg (1.6.3-arm64-darwin)
     pg (1.6.3-x86_64-darwin)
     pg (1.6.3-x86_64-linux)
@@ -741,6 +748,7 @@ GEM
       rubocop-capybara (~> 2.17)
       rubocop-factory_bot (~> 2.22)
     ruby-progressbar (1.13.0)
+    ruby-rc4 (0.1.5)
     rubyzip (2.3.2)
     rufus-scheduler (3.9.2)
       fugit (~> 1.1, >= 1.11.1)
@@ -809,6 +817,8 @@ GEM
     trailblazer-option (0.1.2)
     treetop (1.6.12)
       polyglot (~> 0.3)
+    ttfunk (1.8.0)
+      bigdecimal (~> 3.1)
     twilio-ruby (7.8.5)
       faraday (>= 0.9, < 3.0)
       jwt (>= 1.5, < 4.0)
@@ -856,6 +866,7 @@ GEM
     zlib (3.2.0)
 
 PLATFORMS
+  arm64-darwin-23
   arm64-darwin-24
   x86_64-darwin-24
   x86_64-linux
@@ -905,7 +916,6 @@ DEPENDENCIES
   httmultiparty (~> 0.3.16)
   httparty!
   huginn_agent
-  hypdf!
   jquery-rails (~> 4.6, >= 4.6.1)
   json (~> 2.15, >= 2.15.2)
   jsonpath (~> 1.1, >= 1.1.5)
@@ -918,7 +928,7 @@ DEPENDENCIES
   loofah (~> 2.24, >= 2.24.1)
   mail (>= 2.9.0)
   mini_magick (>= 5.3.1)
-  mini_racer
+  mini_racer!
   mqtt
   multi_xml
   mysql2 (~> 0.5, >= 0.5.7)
@@ -931,6 +941,7 @@ DEPENDENCIES
   omniauth-google-oauth2 (~> 1.0.1)
   omniauth-tumblr
   omniauth-twitter
+  pdf-reader
   pg (~> 1.6, >= 1.6.3)
   pirate_weather_forecast_ruby
   puma
@@ -980,7 +991,7 @@ DEPENDENCIES
   xmpp4r (~> 0.5.6)
 
 RUBY VERSION
-   ruby 3.2.4p170
+   ruby 3.2.10p266
 
 BUNDLED WITH
    2.7.2
