@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-ruby '>=3.2.4'
+ruby '>=3.4.0'
 
 # Ensure github repositories are fetched using HTTPS
 git_source(:github) do |repo_name|
@@ -87,7 +87,7 @@ gem 'coffee-rails', '~> 5'
 gem 'daemons'
 gem 'delayed_job'
 gem 'delayed_job_active_record'
-gem 'devise', '~> 4.9', '>= 4.9.4'
+gem 'devise', '~> 5.0', '>= 5.0.2'
 gem 'em-http-request'
 gem 'execjs'
 gem 'faraday'
@@ -105,7 +105,7 @@ gem 'httmultiparty', '~> 0.3.16'
 gem 'httparty', github: 'jnunemaker/httparty'
 gem 'huginn_agent'
 gem 'jquery-rails', '~> 4.6', '>= 4.6.1'
-gem 'json', '~> 2.15', '>= 2.15.2'
+gem 'json'
 gem 'jsonpath', '~> 1.1', '>= 1.1.5'
 gem 'kaminari', '~> 1.2', '>= 1.2.2'
 gem 'kramdown'
@@ -117,7 +117,8 @@ gem 'mini_magick', '>= 5.3.1'
 gem 'multi_xml'
 gem 'nokogiri', '>= 1.18.10'
 gem 'omniauth'
-gem 'rails', '~> 7.0.1'
+gem 'ostruct'
+gem 'rails', '~> 8.1.0'
 gem 'rails-html-sanitizer', '~> 1.6', '>= 1.6.2'
 gem 'rufus-scheduler', '~> 3.9', '>= 3.9.2', require: false
 gem 'sassc-rails'
@@ -178,7 +179,6 @@ end
 
 group :production do
   gem 'unicorn'
-  gem 'unicorn-rails'
 end
 
 # Platform requirements.
