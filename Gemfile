@@ -45,8 +45,8 @@ gem 'xmpp4r', '~> 0.5.6'          # JabberAgent
 # FIXME needs to loosen omniauth dependency, add rest-client
 gem 'weibo_2', github: 'albertsun/weibo_2', branch: 'master'
 
-# GoogleCalendarPublishAgent and GoogleTranslateAgent
-gem 'google-api-client', '~> 0.53'
+# GoogleCalendarPublishAgent
+gem 'google-apis-calendar_v3'
 gem 'google-cloud-translate-v2'
 
 # Twitter Agents
@@ -97,7 +97,6 @@ gem 'faraday-gzip'
 # gem 'faraday-httpclient'
 gem 'faraday-typhoeus'
 gem 'feedjira', '~> 4.0', '>= 4.0.1'
-gem 'font-awesome-sass', '~> 6.7.2'
 gem 'foreman', '~> 0.90.0'
 gem 'geokit', '~> 1.14'
 gem 'geokit-rails', '~> 2.5'
