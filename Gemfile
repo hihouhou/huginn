@@ -47,12 +47,11 @@ gem 'google-cloud-translate-v2'
 
 # Twitter Agents
 gem 'omniauth-twitter'
-gem 'twitter', github: 'sferik/twitter' # Must to be loaded before cantino-twitter-stream.
-gem 'twitter-stream', github: 'cantino/twitter-stream', branch: 'huginn'
+gem 'twitter', '~> 8.3'
 
 # Tumblr Agents
-gem 'omniauth-tumblr'
-gem 'tumblr_client', github: 'IFTTT/tumblr_client'
+gem 'omniauth-oauth', '~> 1.2', '>= 1.2.1'
+gem 'simple_oauth'
 
 # Dropbox Agents
 gem 'omniauth-dropbox2', '>= 2.0.5'
@@ -68,7 +67,7 @@ gem 'omniauth-evernote'
 gem 'listen', require: false
 
 # S3Agent
-gem 'aws-sdk-s3', '~> 1', '>= 1.217.0'
+gem 'aws-sdk-s3', '~> 1', '>= 1.218.0'
 
 # ImapFolderAgent
 gem 'gmail_xoauth' # support for Gmail using OAuth
@@ -89,13 +88,14 @@ gem 'faraday'
 gem 'faraday-follow_redirects'
 gem 'faraday-gzip'
 # gem 'faraday-httpclient'
+gem 'faraday-multipart'
 gem 'faraday-typhoeus'
 gem 'feedjira', '~> 4.0', '>= 4.0.1'
 gem 'foreman'
 gem 'geokit'
 gem 'geokit-rails'
 gem 'httmultiparty'
-gem 'httparty', github: 'jnunemaker/httparty'
+gem 'httparty', '>= 0.24.2'
 gem 'huginn_agent'
 gem 'jquery-rails'
 gem 'json'
@@ -147,7 +147,7 @@ group :development do
 
   group :test do
     gem 'capybara'
-    gem 'capybara-select-2', github: 'Hirurg103/capybara_select2', require: false
+    gem 'capybara-select-2', require: false
     gem 'rails-controller-testing'
     gem 'rr', require: false
     gem 'rspec'
