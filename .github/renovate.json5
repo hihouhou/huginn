@@ -58,6 +58,11 @@
       enabled: false,
     },
     {
+      matchDatasources: ["docker"],
+      matchPackageNames: ["mysql"],
+      allowedVersions: "<9",
+    },
+    {
       groupName: "patch updated gems",
       matchDatasources: ["rubygems"],
       matchUpdateTypes: ["patch", "digest"],
