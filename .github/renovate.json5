@@ -58,9 +58,11 @@
       enabled: false,
     },
     {
+      // Keep Docker Compose samples aligned with the MySQL server bundled in
+      // the official Ubuntu 22.04-based multi-process image.
       matchDatasources: ["docker"],
       matchPackageNames: ["mysql"],
-      allowedVersions: "<9",
+      allowedVersions: "<8.1",
     },
     {
       groupName: "patch updated gems",
