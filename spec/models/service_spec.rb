@@ -57,6 +57,19 @@ describe Service do
       expect(@service.prepare_request).to eq(nil)
     end
 
+    it "should not update a Threads token outside the refresh window" do
+      @service.provider = "threads"
+      @service.expires_at = Time.current + Service::THREADS_REFRESH_WINDOW + 1.day
+      expect(@service.prepare_request).to eq(nil)
+    end
+
+    it "should update a Threads token inside the refresh window" do
+      allow(@service).to receive(:refresh_token!) { @service }
+      @service.provider = "threads"
+      @service.expires_at = Time.current + Service::THREADS_REFRESH_WINDOW - 1.day
+      expect(@service.prepare_request).to eq(@service)
+    end
+
     it "should call refresh_token! if the token expired" do
       allow(@service).to receive(:refresh_token!) { @service }
       @service.expires_at = Time.now - 1.hour
@@ -112,6 +125,61 @@ describe Service do
 
       expect(@service.token).to eq("new-long-lived-token")
       expect(@service.expires_at).to be > Time.current
+    end
+
+    it "should refresh a Raindrop token with a JSON request" do
+      stub_request(:post, "https://api.raindrop.io/v1/oauth/access_token")
+        .with(
+          body: hash_including({
+            client_id: "raindropclientid",
+            client_secret: "raindropclientsecret",
+            grant_type: "refresh_token",
+            refresh_token: "raindrop-refresh-token",
+          }),
+          headers: { "Content-Type" => /application\/json/ }
+        )
+        .to_return(
+          status: 200,
+          body: {
+            expires_in: 1_209_599,
+            access_token: "new-raindrop-token",
+            refresh_token: "new-raindrop-refresh-token",
+          }.to_json,
+          headers: { "Content-Type" => "application/json" }
+        )
+
+      @service.provider = "raindrop"
+      @service.refresh_token = "raindrop-refresh-token"
+      @service.refresh_token!
+
+      expect(@service.token).to eq("new-raindrop-token")
+      expect(@service.refresh_token).to eq("new-raindrop-refresh-token")
+      expect(@service.expires_at).to be > Time.current
+    end
+
+    it "raises the provider error when refreshing a token fails" do
+      stub_request(:get, "https://graph.threads.net/refresh_access_token")
+        .with(query: {
+          "grant_type" => "th_refresh_token",
+          "access_token" => "expired-token"
+        })
+        .to_return(
+          status: 400,
+          body: {
+            error: {
+              message: "Session has expired",
+              type: "OAuthException"
+            }
+          }.to_json,
+          headers: { "Content-Type" => "application/json" }
+        )
+
+      @service.provider = "threads"
+      @service.token = "expired-token"
+
+      expect {
+        @service.refresh_token!
+      }.to raise_error(RuntimeError, "Unable to refresh threads access token: Session has expired")
     end
   end
 
@@ -174,6 +242,49 @@ describe Service do
       expect(service.token).to eq("long-lived-threads-token")
       expect(service.options[:user_id]).to eq("3141592653")
       expect(service.options[:username]).to eq("threads-user")
+    end
+
+    it "should work with Raindrop services" do
+      raindrop = JSON.parse(File.read(Rails.root.join("spec/data_fixtures/services/raindrop.json")))
+
+      expect {
+        service = @user.services.initialize_or_update_via_omniauth(raindrop)
+        service.save!
+      }.to change { @user.services.count }.by(1)
+
+      service = @user.services.find_by!(provider: "raindrop", uid: "456")
+      expect(service.provider).to eq("raindrop")
+      expect(service.name).to eq("raindrop-user")
+      expect(service.uid).to eq("456")
+      expect(service.token).to eq("raindrop-access-token")
+      expect(service.refresh_token).to eq("raindrop-refresh-token")
+      expect(service.options[:user_id]).to eq(456)
+      expect(service.options[:email]).to eq("raindrop@example.com")
+    end
+
+    it "raises the provider error when exchanging a Threads token fails" do
+      stub_request(:get, "https://graph.threads.net/access_token")
+        .with(query: {
+          "grant_type" => "th_exchange_token",
+          "client_secret" => "threadsappsecret",
+          "access_token" => "short-lived-threads-token"
+        })
+        .to_return(
+          status: 400,
+          body: {
+            error: {
+              message: "Invalid OAuth 2.0 Access Token",
+              type: "OAuthException"
+            }
+          }.to_json,
+          headers: { "Content-Type" => "application/json" }
+        )
+
+      threads = JSON.parse(File.read(Rails.root.join("spec/data_fixtures/services/threads.json")))
+
+      expect {
+        @user.services.initialize_or_update_via_omniauth(threads)
+      }.to raise_error(RuntimeError, "Unable to exchange Threads access token: Invalid OAuth 2.0 Access Token")
     end
   end
 

@@ -1,6 +1,8 @@
 class Service < ActiveRecord::Base
   include JsonSerializedField
 
+  THREADS_REFRESH_WINDOW = 7.days
+
   json_serialize :options
 
   belongs_to :user, inverse_of: :services
@@ -28,7 +30,7 @@ class Service < ActiveRecord::Base
   end
 
   def prepare_request
-    if expires_at && Time.now > expires_at
+    if token_refresh_due?
       refresh_token!
     end
   end
@@ -44,7 +46,12 @@ class Service < ActiveRecord::Base
 
   def refresh_token!
     response =
-      if provider == "threads"
+      case provider
+      when "raindrop"
+        self.class.raindrop_oauth_connection.post(endpoint.to_s) do |request|
+          request.body = refresh_token_parameters
+        end
+      when "threads"
         self.class.threads_connection.get("refresh_access_token", {
           grant_type: "th_refresh_token",
           access_token: token
@@ -53,8 +60,29 @@ class Service < ActiveRecord::Base
         self.class.oauth_connection.post(endpoint.to_s, refresh_token_parameters)
       end
     data = response.body
-    update(expires_at: Time.current + data['expires_in'].to_i, token: data['access_token'],
-           refresh_token: data['refresh_token'].presence || refresh_token)
+    unless response.success? && data["access_token"].present?
+      raise refresh_token_error(response)
+    end
+
+    update!(expires_at: Time.current + data["expires_in"].to_i, token: data["access_token"],
+            refresh_token: data["refresh_token"].presence || refresh_token)
+  end
+
+  def token_refresh_due?
+    return false unless expires_at
+
+    if provider == "threads"
+      Time.current > expires_at - THREADS_REFRESH_WINDOW
+    else
+      Time.current > expires_at
+    end
+  end
+
+  def refresh_token_error(response)
+    message = response.body.dig("error", "message") if response.body.respond_to?(:dig)
+    message ||= response.body.to_s
+
+    "Unable to refresh #{provider} access token: #{message}"
   end
 
   def endpoint
@@ -123,6 +151,14 @@ class Service < ActiveRecord::Base
     end
   end
 
+  def self.raindrop_oauth_connection
+    @raindrop_oauth_connection ||= Faraday.new do |builder|
+      builder.request :json
+      builder.response :json
+      builder.adapter Faraday.default_adapter
+    end
+  end
+
   @@option_providers = HashWithIndifferentAccess.new
   cattr_reader :option_providers
   @@credential_providers = HashWithIndifferentAccess.new
@@ -150,6 +186,21 @@ class Service < ActiveRecord::Base
     }
   end
 
+  register_options_provider('raindrop') do |omniauth|
+    raw_info = omniauth.dig('extra', 'raw_info') || {}
+    name =
+      omniauth.dig('info', 'name').presence ||
+      raw_info['name'].presence ||
+      raw_info['email'].presence ||
+      omniauth['uid']
+
+    {
+      user_id: raw_info['_id'] || raw_info['id'] || omniauth['uid'],
+      email: raw_info['email'],
+      name:
+    }.compact
+  end
+
   register_credentials_provider('default') do |omniauth|
     {
       token: omniauth.dig('credentials', 'token'),
@@ -175,6 +226,10 @@ class Service < ActiveRecord::Base
       if response.success? && data['access_token'].present?
         credentials[:token] = data['access_token']
         credentials[:expires_at] = Time.current + data['expires_in'].to_i
+      else
+        message = data.dig("error", "message") if data.respond_to?(:dig)
+        message ||= data.to_s
+        raise "Unable to exchange Threads access token: #{message}"
       end
     end
 
