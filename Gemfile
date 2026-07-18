@@ -49,7 +49,7 @@ gem 'hipchat'
 
 # HumanTaskAgent
 gem 'rturk'
-gem 'erector', github: 'dsander/erector', branch: 'rails6'
+gem 'erector', github: 'dsander/erector', ref: '821c2fa9174b56cc39e203883d83b18b60912a36' # branch: 'rails6'
 
 # ImapFolderAgent
 gem 'gmail_xoauth' # support for Gmail using OAuth
@@ -71,7 +71,7 @@ gem 'mqtt'
 gem 'pdf-reader'
 
 # S3Agent
-gem 'aws-sdk-s3', '~> 1', '>= 1.227.0'
+gem 'aws-sdk-s3', '~> 1', '>= 1.228.0'
 
 # SlackAgent
 gem 'slack-notifier'
@@ -123,16 +123,16 @@ gem 'kaminari', '~> 1.2', '>= 1.2.2'
 gem 'kramdown'
 gem 'liquid', '~> 5.13'
 gem 'logger'
-gem 'loofah', '~> 2.25', '>= 2.25.1'
+gem 'loofah', '~> 2.25', '>= 2.25.2'
 gem 'mail', '>= 2.9.1'
-gem 'mini_magick', '>= 5.3.1'
+gem 'mini_magick', '>= 5.3.2'
 gem 'multi_xml'
 gem 'nokogiri', '>= 1.19.4'
 gem 'omniauth'
 gem 'ostruct'
 gem 'puma'
 gem 'rails', '~> 8.1.3'
-gem 'rails-html-sanitizer', '~> 1.7'
+gem 'rails-html-sanitizer', '~> 1.7', '>= 1.7.1'
 gem 'rufus-scheduler', '~> 3.9', '>= 3.9.2', require: false
 gem 'sassc-rails'
 gem 'select2-rails'
