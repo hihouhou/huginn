@@ -40,6 +40,78 @@ describe AgentsController do
       get :index
       expect(assigns(:agents).map(&:disabled).uniq).to eq([false])
     end
+
+    it "filters agents that are not assigned to a scenario" do
+      sign_in users(:bob), scope: :user
+      get :index, params: { without_scenario: 1 }, format: :json
+
+      expect(assigns(:agents)).to include(agents(:bob_website_agent))
+      expect(assigns(:agents)).not_to include(agents(:bob_weather_agent))
+    end
+
+    it "filters an individual scenario without duplicating agents with multiple memberships" do
+      sign_in users(:bob), scope: :user
+      scenario = scenarios(:bob_weather)
+      other = users(:bob).scenarios.create!(name: "Another scenario")
+      agents(:bob_weather_agent).scenarios << other
+
+      get :index, params: { scenario_id: scenario.id }, format: :json
+
+      expect(assigns(:agents)).to match_array(scenario.agents)
+      expect(assigns(:scenario_counts)[scenario.id]).to eq(scenario.agents.count)
+      expect(assigns(:scenario_counts)[other.id]).to eq(1)
+    end
+
+    it "does not allow filtering by another user's scenario" do
+      sign_in users(:bob), scope: :user
+      expect {
+        get :index, params: { scenario_id: scenarios(:jane_weather).id }
+      }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+
+    it "combines service, scenario, and enabled filters and counts" do
+      sign_in users(:bob), scope: :user
+      agent = agents(:bob_twitter_user_agent)
+      agent.scenarios << scenarios(:bob_weather)
+      agent.update_column(:disabled, true)
+
+      get :index, params: { service_id: services(:generic).id, scenario_id: scenarios(:bob_weather).id, enabled: "1" }, format: :json
+      expect(assigns(:agents)).to be_empty
+      expect(assigns(:all_agents_count)).to eq(0)
+
+      get :index, params: { service_id: services(:generic).id, scenario_id: scenarios(:bob_weather).id, enabled: "0" }, format: :json
+      expect(assigns(:agents)).to match_array([agent])
+      expect(assigns(:scenario_counts)[scenarios(:bob_weather).id]).to eq(1)
+    end
+
+    it "accepts the unassigned option without JavaScript" do
+      sign_in users(:bob), scope: :user
+      get :index, params: { scenario_id: "none" }, format: :json
+      expect(assigns(:agents)).to match_array(users(:bob).agents.where.missing(:scenario_memberships))
+    end
+
+    it "renders escaped account names with provider icons and no provider name" do
+      sign_in users(:bob), scope: :user
+      services(:generic).update!(provider: "github", name: "<b>account</b>")
+      get :index, params: { service_id: services(:generic).id, sort: "name.asc" }
+      document = Nokogiri::HTML(response.body)
+      option = document.at_css("#agent_service_filter option[selected]")
+      label = Nokogiri::HTML.fragment(option["data-label"])
+      expect(label.at_css(".fa-github")).to be_present
+      expect(label.text).to eq("<b>account</b>")
+      expect(label.at_css("b")).to be_nil
+      expect(document.at_css(".agent-filter-form input[name=sort]")["value"]).to eq("name.asc")
+      expect(document.css("#agent_scenario_filter optgroup option").map { |item| item["value"] }).to eq([scenarios(:bob_weather).id.to_s])
+    end
+  end
+
+  describe "PUT toggle_visibility" do
+    it "preserves the active filters and ordering" do
+      sign_in users(:bob), scope: :user
+      filters = { without_scenario: "1", service_id: services(:generic).id.to_s, sort: "name.asc" }
+      put :toggle_visibility, params: filters
+      expect(response).to redirect_to(agents_path(filters))
+    end
   end
 
   describe "POST handle_details_post" do
@@ -147,8 +219,11 @@ describe AgentsController do
       sign_in users(:bob), scope: :user
     end
 
-    it "runs event propagation for all Agents" do
-      expect(Agent).to receive(:receive!).and_call_original
+    it "runs event propagation only for the current user's Agents" do
+      expect(Agent).to receive(:receive!).and_wrap_original do |method|
+        expect(Agent.current_scope.ids).to match_array(users(:bob).agents.ids)
+        method.call
+      end
       post :propagate
     end
 
@@ -267,6 +342,17 @@ describe AgentsController do
       expect(assigns(:agent)).to be_a(Agents::WebsiteAgent)
     end
 
+    it "does not accept private Services owned by other users" do
+      service = services(:global)
+      service.update_column(:global, false)
+      sign_in users(:bob), scope: :user
+
+      expect {
+        post :create, params: { agent: valid_attributes(service_id: service.id) }
+      }.not_to change(Agent, :count)
+      expect(assigns(:agent)).to have(1).error_on(:service)
+    end
+
     it "shows errors" do
       sign_in users(:bob), scope: :user
       expect {
@@ -323,6 +409,18 @@ describe AgentsController do
       sign_in users(:bob)
       post :update, params: {:id => agents(:bob_website_agent).to_param, :agent => valid_attributes(:scenario_ids => [scenarios(:jane_weather).id])}
       expect(assigns(:agent)).to have(1).errors_on(:scenarios)
+    end
+
+    it "does not accept private Services owned by other users" do
+      service = services(:global)
+      service.update_column(:global, false)
+      agent = agents(:bob_website_agent)
+      sign_in users(:bob), scope: :user
+
+      post :update, params: { id: agent.to_param, agent: valid_attributes(service_id: service.id) }
+
+      expect(assigns(:agent)).to have(1).error_on(:service)
+      expect(agent.reload.service_id).to be_nil
     end
 
     it "shows errors" do

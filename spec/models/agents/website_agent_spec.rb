@@ -117,7 +117,7 @@ describe Agents::WebsiteAgent do
 
           @checker.options['type'] = 'json'
           @checker.options['extract'] = {
-            'url' => { 'path' => 'bar' },
+            'url' => { 'path' => '$.bar' },
           }
           expect(@checker).to be_valid
         end
@@ -263,7 +263,7 @@ describe Agents::WebsiteAgent do
           'mode' => 'on_change',
           'http_success_codes' => [404],
           'extract' => {
-            'version' => { 'path' => 'response.version' },
+            'version' => { 'path' => '$.response.version' },
           },
           # no unzip option
         }
@@ -294,7 +294,7 @@ describe Agents::WebsiteAgent do
           'url' => "http://gzip.com",
           'mode' => 'on_change',
           'extract' => {
-            'version' => { 'path' => 'response.version' },
+            'version' => { 'path' => '$.response.version' },
           },
           # no unzip option
         }
@@ -323,7 +323,7 @@ describe Agents::WebsiteAgent do
           'url' => "http://gzip.com",
           'mode' => 'on_change',
           'extract' => {
-            'version' => { 'path' => 'response.version' },
+            'version' => { 'path' => '$.response.version' },
           },
           'unzip' => 'gzip',
         }
@@ -429,7 +429,7 @@ describe Agents::WebsiteAgent do
             super().merge(
               'type' => 'json',
               'extract' => {
-                'value' => { 'path' => 'value' }
+                'value' => { 'path' => '$.value' }
               }
             )
           end
@@ -609,7 +609,7 @@ describe Agents::WebsiteAgent do
             super().merge(
               'type' => 'json',
               'extract' => {
-                'value' => { 'path' => 'value' }
+                'value' => { 'path' => '$.value' }
               }
             )
           end
@@ -990,8 +990,8 @@ describe Agents::WebsiteAgent do
             'url' => "http://json-site.com",
             'mode' => 'on_change',
             'extract' => {
-              'version' => { 'path' => "response.version" },
-              'title' => { 'path' => "response.title" }
+              'version' => { 'path' => "$.response.version" },
+              'title' => { 'path' => "$.response.title" }
             }
           }
           checker = Agents::WebsiteAgent.new(name: "Weather Site", options: site)
@@ -1025,9 +1025,9 @@ describe Agents::WebsiteAgent do
             'url' => "http://json-site.com",
             'mode' => 'on_change',
             'extract' => {
-              'title' => { 'path' => "response.data[*].title" },
-              'version' => { 'path' => "response.data[*].version" },
-              'status' => { 'path' => "response.status", 'repeat' => true },
+              'title' => { 'path' => "$.response.data[*].title" },
+              'version' => { 'path' => "$.response.data[*].version" },
+              'status' => { 'path' => "$.response.status", 'repeat' => true },
             }
           }
           checker = Agents::WebsiteAgent.new(name: "Weather Site", options: site)
@@ -1290,8 +1290,8 @@ describe Agents::WebsiteAgent do
               'type' => 'json',
               'data_from_event' => '{{ some_object.some_data }}',
               'extract' => {
-                'value' => { 'path' => 'hello' },
-                'url' => { 'path' => 'href' },
+                'value' => { 'path' => '$.hello' },
+                'url' => { 'path' => '$.href' },
               },
               'template' => {
                 'value' => '{{ value }}',
@@ -1479,49 +1479,18 @@ describe Agents::WebsiteAgent do
     end
 
     describe "#check" do
-      before do
+      it "preserves and escapes hostname, query, Unicode and bracketed URL components" do
         expect { @checker.check }.to change { Event.count }.by(8)
-        @events = Event.last(8)
-      end
-
-      it "should check hostname" do
-        event = @events[0]
-        expect(event.payload['url']).to eq("http://google.com")
-      end
-
-      it "should check unescaped query" do
-        event = @events[1]
-        expect(event.payload['url']).to eq("https://www.google.ca/search?q=some%20query")
-      end
-
-      it "should check properly escaped query" do
-        event = @events[2]
-        expect(event.payload['url']).to eq("https://www.google.ca/search?q=some%20query")
-      end
-
-      it "should check unescaped unicode url" do
-        event = @events[3]
-        expect(event.payload['url']).to eq("http://ko.wikipedia.org/wiki/%EC%9C%84%ED%82%A4%EB%B0%B1%EA%B3%BC:%EB%8C%80%EB%AC%B8")
-      end
-
-      it "should check unescaped unicode query" do
-        event = @events[4]
-        expect(event.payload['url']).to eq("https://www.google.ca/search?q=%EC%9C%84%ED%82%A4%EB%B0%B1%EA%B3%BC:%EB%8C%80%EB%AC%B8")
-      end
-
-      it "should check properly escaped unicode url" do
-        event = @events[5]
-        expect(event.payload['url']).to eq("http://ko.wikipedia.org/wiki/%EC%9C%84%ED%82%A4%EB%B0%B1%EA%B3%BC:%EB%8C%80%EB%AC%B8")
-      end
-
-      it "should check properly escaped unicode query" do
-        event = @events[6]
-        expect(event.payload['url']).to eq("https://www.google.ca/search?q=%EC%9C%84%ED%82%A4%EB%B0%B1%EA%B3%BC:%EB%8C%80%EB%AC%B8")
-      end
-
-      it "should check url with unescaped brackets in the path component" do
-        event = @events[7]
-        expect(event.payload['url']).to eq("http://[::1]/path%5B%5D?query[]=foo")
+        expect(Event.last(8).map { |event| event.payload['url'] }).to eq([
+          "http://google.com",
+          "https://www.google.ca/search?q=some%20query",
+          "https://www.google.ca/search?q=some%20query",
+          "http://ko.wikipedia.org/wiki/%EC%9C%84%ED%82%A4%EB%B0%B1%EA%B3%BC:%EB%8C%80%EB%AC%B8",
+          "https://www.google.ca/search?q=%EC%9C%84%ED%82%A4%EB%B0%B1%EA%B3%BC:%EB%8C%80%EB%AC%B8",
+          "http://ko.wikipedia.org/wiki/%EC%9C%84%ED%82%A4%EB%B0%B1%EA%B3%BC:%EB%8C%80%EB%AC%B8",
+          "https://www.google.ca/search?q=%EC%9C%84%ED%82%A4%EB%B0%B1%EA%B3%BC:%EB%8C%80%EB%AC%B8",
+          "http://[::1]/path%5B%5D?query[]=foo",
+        ])
       end
     end
   end

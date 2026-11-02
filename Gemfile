@@ -1,4 +1,4 @@
-source 'https://rubygems.org'
+source 'https://rubygems.org', cooldown: 3
 
 ruby '>=3.4.0'
 
@@ -30,7 +30,7 @@ end
 # then run `bundle` and commit the updated Gemfile and Gemfile.lock.
 
 # Dropbox Agents
-gem 'omniauth-dropbox2', '>= 2.0.5'
+gem 'omniauth-dropbox2', '>= 2.0.6'
 
 # EvernoteAgent
 gem 'evernote_oauth'
@@ -47,19 +47,15 @@ gem 'google-cloud-translate-v2'
 # HipchatAgent
 gem 'hipchat'
 
-# HumanTaskAgent
-gem 'rturk'
-gem 'erector', github: 'dsander/erector', ref: '821c2fa9174b56cc39e203883d83b18b60912a36' # branch: 'rails6'
-
 # ImapFolderAgent
 gem 'gmail_xoauth' # support for Gmail using OAuth
-gem 'omniauth-google-oauth2', '~> 1.2.2'
+gem 'omniauth-google-oauth2', '~> 1.2.3'
 
 # JabberAgent
 gem 'xmpp4r'
 
 # JavaScriptAgent
-gem 'mini_racer', github: 'knu/mini_racer', branch: 'fix/darwin_build'
+gem 'mini_racer', '~> 0.22.2'
 
 # LocalFileAgent (watch functionality)
 gem 'listen', require: false
@@ -71,13 +67,13 @@ gem 'mqtt'
 gem 'pdf-reader'
 
 # S3Agent
-gem 'aws-sdk-s3', '~> 1', '>= 1.228.1'
+gem 'aws-sdk-s3', '~> 1', '>= 1.236.0'
 
 # SlackAgent
 gem 'slack-notifier'
 
 # Tumblr Agents
-gem 'omniauth-oauth', '~> 1.2', '>= 1.2.1'
+gem 'omniauth-oauth', '~> 1.3'
 gem 'simple_oauth'
 
 # TwilioAgent
@@ -85,7 +81,7 @@ gem 'twilio-ruby'
 
 # Twitter Agents
 gem 'omniauth-twitter'
-gem 'twitter', '~> 8.3', '>= 8.3.1'
+gem 'twitter', '~> 8.3', '>= 8.3.2'
 
 # UserLocationAgent
 gem 'haversine'
@@ -100,6 +96,7 @@ gem 'bootstrap-kaminari-views'
 gem 'daemons'
 gem 'delayed_job'
 gem 'delayed_job_active_record'
+gem 'delayed_job_master', '~> 3.2'
 gem 'devise', '~> 5.0', '>= 5.0.4'
 gem 'em-http-request'
 gem 'faraday'
@@ -109,29 +106,31 @@ gem 'faraday-gzip'
 # gem 'faraday-httpclient'
 gem 'faraday-multipart'
 gem 'faraday-typhoeus'
-gem 'feedjira', '~> 4.0', '>= 4.0.2'
+gem 'feedjira', '~> 4.0', '>= 4.0.3'
 gem 'foreman'
 gem 'geokit'
 gem 'geokit-rails'
 gem 'httmultiparty'
-gem 'httparty', '>= 0.24.2'
+gem 'httparty', '>= 0.24.3'
 gem 'huginn_agent'
 gem 'jquery-rails'
-gem 'json'
+gem 'json', '< 4'
 gem 'jsonpath'
-gem 'kaminari', '~> 1.2', '>= 1.2.2'
+gem "janeway-jsonpath", "~> 1.2", require: "janeway"
+gem 'kaminari', '~> 1.3', '>= 1.3.1'
 gem 'kramdown'
-gem 'liquid', '~> 5.13'
+gem 'liquid', '~> 5.14'
 gem 'logger'
 gem 'loofah', '~> 2.25', '>= 2.25.2'
 gem 'mail', '>= 2.9.1'
-gem 'mini_magick', '>= 5.3.2'
+gem 'mime-types', require: 'mime/types'
+gem 'mini_magick', '>= 5.4.0'
 gem 'multi_xml'
 gem 'nokogiri', '>= 1.19.4'
 gem 'omniauth'
 gem 'ostruct'
 gem 'puma'
-gem 'rails', '~> 8.1.3'
+gem 'rails', '~> 8.1.4'
 gem 'rails-html-sanitizer', '~> 1.7', '>= 1.7.1'
 gem 'rufus-scheduler', '~> 3.9', '>= 3.9.2', require: false
 gem 'sassc-rails'
@@ -140,9 +139,11 @@ gem 'spectrum-rails'
 gem 'sprockets'
 gem 'terser'
 gem 'typhoeus'
+gem 'with_advisory_lock', '~> 7.6'
 
 group :development, :test do
-  gem 'debug'
+  # debug's fork hook waits for ChromeDriver before Capybara can stop it at exit.
+  gem "debug", require: false
   gem 'rspec-rails'
 end
 
@@ -201,7 +202,7 @@ ENV['DATABASE_ADAPTER'] ||=
   end
 
 if_true(ENV['DATABASE_ADAPTER'].strip == 'postgresql') do
-  gem 'pg', '~> 1.6', '>= 1.6.3'
+  gem 'pg', '~> 1.7'
 end
 
 if_true(ENV['DATABASE_ADAPTER'].strip == 'mysql2') do

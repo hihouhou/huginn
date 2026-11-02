@@ -63,14 +63,11 @@ module WebRequestConcern
   Faraday::Response.register_middleware character_encoding: CharacterEncoding
 
   extend ActiveSupport::Concern
+  include AgentProxyConcern
 
   def validate_web_request_options!
     if options['user_agent'].present?
       errors.add(:base, "user_agent must be a string") unless options['user_agent'].is_a?(String)
-    end
-
-    if options['proxy'].present?
-      errors.add(:base, "proxy must be a string") unless options['proxy'].is_a?(String)
     end
 
     if option_provided?(options['disable_ssl_verification']) && boolify(options['disable_ssl_verification']).nil?
@@ -82,7 +79,7 @@ module WebRequestConcern
     end
 
     begin
-      basic_auth_credentials(options['basic_auth'])
+      basic_auth_credentials(interpolated['basic_auth'])
     rescue ArgumentError => e
       errors.add(:base, e.message)
     end
@@ -133,10 +130,11 @@ module WebRequestConcern
 
       builder.headers[:user_agent] = user_agent
 
-      builder.proxy = interpolated['proxy'].presence
+      if (proxy = request_proxy)
+        builder.proxy = proxy
+      end
 
       unless boolify(interpolated['disable_redirect_follow'])
-        require 'faraday/follow_redirects'
         builder.response :follow_redirects
       end
 
@@ -147,7 +145,10 @@ module WebRequestConcern
         builder.options.params_encoder = DoNotEncoder
       end
 
-      builder.options.timeout = (Delayed::Worker.max_run_time.seconds - 2).to_i
+      builder.options.open_timeout = NetworkTimeout.open_timeout
+      builder.options.timeout = NetworkTimeout.timeout
+      builder.options.read_timeout = NetworkTimeout.timeout
+      builder.options.write_timeout = NetworkTimeout.timeout
 
       if userinfo = basic_auth_credentials
         builder.request :authorization, :basic, *userinfo

@@ -446,6 +446,21 @@ describe Agents::JavaScriptAgent do
   end
 
   describe "fetch" do
+    it_behaves_like AgentProxyConcern do
+      let(:agent) { @agent }
+      let(:proxy_client) { agent.send(:fetch_client) }
+    end
+
+    it "goes through OUTBOUND_PROXY when it is set" do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with('OUTBOUND_PROXY').and_return('http://smokescreen:4750')
+      OutboundProxy.configure!
+      expect(@agent.send(:fetch_client).proxy.uri.to_s).to eq('http://smokescreen:4750')
+    ensure
+      allow(ENV).to receive(:[]).with('OUTBOUND_PROXY').and_return(nil)
+      OutboundProxy.configure!
+    end
+
     it "performs a GET request and exposes the standard response fields" do
       stub_request(:get, "http://example.com/").to_return(
         status: 200,

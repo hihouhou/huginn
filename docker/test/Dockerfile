@@ -1,7 +1,9 @@
-FROM ghcr.io/huginn/huginn-single-process
+ARG HUGINN_IMAGE=ghcr.io/huginn/huginn-single-process:master
+FROM ${HUGINN_IMAGE}
 
 USER 0
 
+# Require the eMudhra CA distrust update even when using an older HUGINN_IMAGE.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       ca-certificates \
@@ -9,6 +11,7 @@ RUN apt-get update && \
       gnupg \
       unzip \
     && \
+    dpkg --compare-versions "$(dpkg-query -W -f='${Version}' ca-certificates)" ge 20260816ubuntu0.24.04.1 && \
     curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-linux.gpg && \
     echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux.gpg] https://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google-chrome.list && \
     apt-get update && \

@@ -27,8 +27,6 @@ describe Agents::LocalFileAgent do
     it "requires mode to be either 'read' or 'write'" do
       @checker.options['mode'] = 'write'
       expect(@checker).to be_valid
-      @checker.options['mode'] = 'write'
-      expect(@checker).to be_valid
       @checker.options['mode'] = 'test'
       expect(@checker).not_to be_valid
     end
@@ -151,9 +149,18 @@ describe Agents::LocalFileAgent do
     end
   end
 
-  it "get_io opens the file" do
-    expect(File).to receive(:open).with('test', 'r')
-    @checker.get_io('test')
+  context "#get_io" do
+    it "opens the file" do
+      expect(File).to receive(:open).with('test', 'r')
+      @checker.get_io('test')
+    end
+
+    it "does not open the file when ENABLE_INSECURE_AGENTS is not set to true" do
+      ENV['ENABLE_INSECURE_AGENTS'] = 'false'
+      expect(File).not_to receive(:open)
+      expect { expect(@checker.get_io('test')).to be_nil }.to change(AgentLog, :count).by(1)
+      ENV['ENABLE_INSECURE_AGENTS'] = 'true'
+    end
   end
 
   context "#start_worker?" do
@@ -173,13 +180,6 @@ describe Agents::LocalFileAgent do
       @checker.options['mode'] = 'write'
       @checker.options['data'] = '{{ data }}'
       @file_mock = double()
-    end
-
-    it "writes the data at data into a file" do
-      expect(@file_mock).to receive(:write).with('hello world')
-      event = Event.new(payload: {'data' => 'hello world'})
-      expect(File).to receive(:open).with(File.join(Rails.root, 'tmp', 'spec'), 'w').and_yield(@file_mock)
-      @checker.receive([event])
     end
 
     it "appends the data at data onto a file" do

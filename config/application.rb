@@ -16,6 +16,8 @@ require 'rails/test_unit/railtie'
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
+# gRPC otherwise prefers its bundled roots.pem over the OS trust store.
+ENV["GRPC_USE_SYSTEM_ROOTS_OVER_LANGUAGE_CALLBACK"] ||= "true"
 Bundler.require(*Rails.groups)
 
 module Huginn
@@ -57,7 +59,8 @@ module Huginn
 
     # The default locale is :en and all translations from config/locales/*.rb,yml are auto loaded.
     # config.i18n.load_path += Dir[Rails.root.join('my', 'locales', '*.{rb,yml}').to_s]
-    # config.i18n.default_locale = :de
+    # Set LOCALE to use another locale provided by a translation gem.
+    config.i18n.default_locale = ENV['LOCALE'].presence || :en
 
     # Configure the default encoding used in templates for Ruby 1.9.
     config.encoding = 'utf-8'

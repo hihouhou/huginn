@@ -5,7 +5,7 @@
 
 This guide is long because it covers many cases and includes all commands you need.
 
-This installation guide was created for and tested on **Debian/Ubuntu** operating systems. Please read [doc/install/requirements.md](./requirements.md) for hardware and operating system requirements.
+This installation guide is written for **Debian/Ubuntu** operating systems and is maintained on a best-effort basis.  Some package names may differ on your release.  Unless you need a source installation, the [Docker images](../docker/install.md) are the recommended way to run Huginn.  Please read [the requirements](./requirements.md) for hardware and operating system requirements.
 
 This is the official installation guide to set up a production server. To set up a **development installation** or for many other installation options please see [the getting started section of the readme](https://github.com/huginn/huginn#getting-started).
 
@@ -72,8 +72,8 @@ Remove the old Ruby versions if present:
 Download Ruby and compile it:
 
     mkdir /tmp/ruby && cd /tmp/ruby
-    curl -L --progress-bar https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.6.tar.xz | tar xJ
-    cd ruby-4.0.6
+    curl -L --progress-bar https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.9.tar.xz | tar xJ
+    cd ruby-4.0.9
     ./configure --disable-install-rdoc
     make -j`nproc`
     sudo make install
@@ -279,12 +279,12 @@ You can also tune Puma through `.env`.  `WEB_CONCURRENCY` controls the number of
     # Migrate to the latest version
     sudo -u huginn -H bundle exec rake db:migrate RAILS_ENV=production
 
-    # Create admin user and example agents using the default admin/password login
-    sudo -u huginn -H bundle exec rake db:seed RAILS_ENV=production SEED_USERNAME=admin SEED_PASSWORD=password
+    # Create admin user and example agents
+    sudo -u huginn -H bundle exec rake db:seed RAILS_ENV=production SEED_USERNAME=admin SEED_PASSWORD=your-password
 
 When done you see `See the Huginn Wiki for more Agent examples!  https://github.com/huginn/huginn/wiki`
 
-**Note:** This will create an initial user, you can change the username and password by supplying it in environmental variables `SEED_USERNAME` and `SEED_PASSWORD` as seen above. If you don't change the password (and it is set to the default one) please wait with exposing Huginn to the public internet until the installation is done and you've logged into the server and changed your password.
+**Note:** This will create an initial user, you can change the username and password by supplying it in environmental variables `SEED_USERNAME` and `SEED_PASSWORD` as seen above. If you leave out `SEED_PASSWORD`, a random password is generated and printed once by the command; note it down.
 
 ### Compile Assets
 
@@ -370,7 +370,7 @@ You should receive `syntax is okay` and `test is successful` messages. If you re
 Visit YOUR_SERVER in your web browser for your first Huginn login. The setup has created a default admin account for you. You can use it to log in:
 
     admin (or your SEED_USERNAME)
-    password (or your SEED_PASSWORD)
+    your SEED_PASSWORD (or the generated password printed by rake db:seed)
 
 
 **Enjoy!** :sparkles: :star: :fireworks:
@@ -483,10 +483,12 @@ MySQL installations (>= 5.7.26) on Ubuntu use the UNIX `auth_socket` plugin by d
 
 Once in the MySQL shell, run the following command to set the password for the root user by replacing `new-password` with a password of your choice
 
-    ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'new-password';
+    ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'new-password';
+
+Use this authentication plugin with MySQL 8.0 and 8.4.  MySQL 8.4 disables `mysql_native_password` by default.
 
 After the change has been made, exit the MySQL shell with `\q`. 
 
-For the change to propogate, restart the MySQL server
+For the change to propagate, restart the MySQL server
 
     sudo service mysql restart

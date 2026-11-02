@@ -1,16 +1,23 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["config:recommended"],
+  extends: ["config:recommended", "helpers:pinGitHubActionDigests"],
   labels: ["dependencies", "automerge"],
+  minimumReleaseAge: "3 days",
   prHourlyLimit: 0,
   prConcurrentLimit: 10,
   timezone: "Asia/Tokyo",
   schedule: ["after 9am and before 1pm on Saturday"],
-  lockFileMaintenance: {
-    enabled: true,
-    schedule: ["after 9am and before 1pm on Friday"],
-  },
+  lockFileMaintenance: { enabled: false },
   customManagers: [
+    {
+      customType: "regex",
+      description: "Update the bundled MySQL LTS server",
+      managerFilePatterns: ["/^docker/multi-process/scripts/standalone-packages$/"],
+      matchStrings: ["MYSQL_VERSION=(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      depNameTemplate: "mysql",
+      datasourceTemplate: "docker",
+      versioningTemplate: "semver",
+    },
     {
       customType: "regex",
       description: "Update Ruby versions in manual install docs",
@@ -37,6 +44,15 @@
     },
     {
       customType: "regex",
+      description: "Update the Smokescreen commit built into the Docker images",
+      managerFilePatterns: ["/(^|/)docker/(multi|single)-process/Dockerfile$/"],
+      matchStrings: ["ARG SMOKESCREEN_COMMIT=(?<currentDigest>[0-9a-f]{40})"],
+      depNameTemplate: "https://github.com/stripe/smokescreen",
+      datasourceTemplate: "git-refs",
+      currentValueTemplate: "master",
+    },
+    {
+      customType: "regex",
       description: "Update Ruby versions in Docker base images",
       managerFilePatterns: ["/(^|/)docker/(multi|single)-process/Dockerfile$/"],
       matchStrings: [
@@ -48,6 +64,26 @@
   ],
   packageRules: [
     {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDepTypes": [
+        "action"
+      ],
+      "matchFileNames": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/docker-tag.yml",
+        ".github/workflows/lockfile-maintenance.yml",
+        ".github/workflows/renovate_bundle_install_ruby.yml",
+        ".github/workflows/actions-lock.yml"
+      ],
+      "pinDigests": false
+    },
+    {
+      matchManagers: ["github-actions"],
+      groupName: "github actions",
+    },
+    {
       groupName: "Ruby",
       matchDatasources: ["ruby-version"],
       matchPackageNames: ["ruby", "ruby-version"],
@@ -58,11 +94,16 @@
       enabled: false,
     },
     {
-      // Keep Docker Compose samples aligned with the MySQL server bundled in
-      // the official Ubuntu 22.04-based multi-process image.
+      // Keep CI runners on the Ubuntu release the Docker images are based on.
+      matchDatasources: ["github-runners"],
+      matchPackageNames: ["ubuntu"],
+      enabled: false,
+    },
+    {
+      // Keep Compose, CI, and the bundled server on the same LTS series.
       matchDatasources: ["docker"],
       matchPackageNames: ["mysql"],
-      allowedVersions: "<8.1",
+      allowedVersions: ">=8.4 <8.5",
     },
     {
       groupName: "patch updated gems",
@@ -72,6 +113,12 @@
     {
       groupName: "minor updated gems",
       matchDatasources: ["rubygems"],
+      matchUpdateTypes: ["minor"],
+    },
+    {
+      groupName: "patch updated gems",
+      matchDatasources: ["rubygems"],
+      matchPackageNames: ["aws-sdk-s3"],
       matchUpdateTypes: ["minor"],
     },
     {
@@ -140,7 +187,6 @@
         "rspec-mocks",
         "rspec-rails",
         "rspec-retry",
-        "rturk",
         "rubocop",
         "rubocop-performance",
         "rubocop-rspec",

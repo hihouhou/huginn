@@ -1,9 +1,25 @@
-FROM rubylang/ruby:4.0.6-jammy
+# Smokescreen is an egress proxy that refuses connections to private and
+# link-local addresses.  It is started inside the container when
+# ENABLE_SMOKESCREEN=true; see doc/manual/outbound-requests.md.
+# renovate: datasource=git-refs depName=https://github.com/stripe/smokescreen branch=master
+ARG SMOKESCREEN_COMMIT=68e7b8218e226bc47d09ce705fdb8fed82145ceb
+
+FROM golang:1.27-alpine AS smokescreen
+ARG SMOKESCREEN_COMMIT
+RUN CGO_ENABLED=0 go install "github.com/stripe/smokescreen@${SMOKESCREEN_COMMIT}"
+
+FROM rubylang/ruby:4.0.9-noble
 
 COPY docker/scripts/prepare /scripts/
-RUN /scripts/prepare
+# Require the eMudhra CA distrust update (Ubuntu USN-8944-1).
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    dpkg --compare-versions "$(dpkg-query -W -f='${Version}' ca-certificates)" ge 20260816ubuntu0.24.04.1 && \
+    /scripts/prepare
 
-COPY docker/multi-process/scripts/standalone-packages /scripts/
+COPY --from=smokescreen /go/bin/smokescreen /usr/local/bin/smokescreen
+
+COPY docker/multi-process/scripts/standalone-packages docker/multi-process/scripts/mysql-2025-release.asc /scripts/
 RUN /scripts/standalone-packages
 
 WORKDIR /app
@@ -45,14 +61,13 @@ EXPOSE 3000
 COPY docker/multi-process/scripts/supervisord.conf /etc/supervisor/
 COPY ["docker/multi-process/scripts/bootstrap.conf", \
       "docker/multi-process/scripts/foreman.conf", \
-      "docker/multi-process/scripts/mysqld.conf", "/etc/supervisor/conf.d/"]
+      "docker/multi-process/scripts/mysqld.conf", \
+      "docker/multi-process/scripts/smokescreen.conf", "/etc/supervisor/conf.d/"]
 COPY ["docker/multi-process/scripts/bootstrap.sh", \
       "docker/multi-process/scripts/foreman.sh", \
       "docker/multi-process/scripts/init", \
-      "docker/multi-process/scripts/mysql-5.7.44-linux-glibc2.12-x86_64.tar.gz.asc", \
-      "docker/multi-process/scripts/mysql-2022-release.asc", \
       "docker/multi-process/scripts/upgrade-mysql", \
-      "docker/scripts/setup_env", "/scripts/"]
+      "docker/scripts/setup_env", "docker/scripts/smokescreen", "/scripts/"]
 CMD ["/scripts/init"]
 
 VOLUME /var/lib/mysql

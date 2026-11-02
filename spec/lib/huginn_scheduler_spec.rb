@@ -3,7 +3,7 @@ require 'huginn_scheduler'
 
 describe HuginnScheduler do
   before(:each) do
-    @rufus_scheduler = Rufus::Scheduler.new
+    @rufus_scheduler = Rufus::Scheduler.new(frequency: 0.01)
     @scheduler = HuginnScheduler.new
     allow(@scheduler).to receive(:setup)
     @scheduler.setup!(@rufus_scheduler, Mutex.new)
@@ -22,7 +22,13 @@ describe HuginnScheduler do
 
   it "should run scheduled agents" do
     expect(Agent).to receive(:run_schedule).with('every_1h')
-    expect_any_instance_of(IO).to receive(:puts).with('Queuing schedule for every_1h')
+    expect_any_instance_of(IO).to receive(:puts).with('Queued schedule for every_1h')
+    @scheduler.send(:run_schedule, 'every_1h')
+  end
+
+  it "should log when a scheduled run is already queued" do
+    expect(AgentRunScheduleJob).to receive(:perform_later).with('every_1h').and_return(false)
+    expect_any_instance_of(IO).to receive(:puts).with('Skipped schedule for every_1h (already queued)')
     @scheduler.send(:run_schedule, 'every_1h')
   end
 
@@ -96,7 +102,9 @@ describe Rufus::Scheduler do
     @taoe, Thread.abort_on_exception = Thread.abort_on_exception, false
     @oso, @ose, $stdout, $stderr = $stdout, $stderr, StringIO.new, StringIO.new
 
-    @scheduler = Rufus::Scheduler.new
+    @scheduler = Rufus::Scheduler.new(frequency: 0.01)
+    # Inspect registration without executing scheduled Agent jobs.
+    @scheduler.pause
 
     allow_any_instance_of(Agents::SchedulerAgent).to receive(:second_precision_enabled) { true }
 
